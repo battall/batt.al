@@ -1,0 +1,65 @@
+{
+  "about": "19 yaşında teknolojiye meraklı ve verimli kod yazmaktan keyif alan bir developerım. Çocukluğumdan beri yazılıma hayran biri olarak gelecek için sistemler tasarlamak ve inşa etmek istiyorum.",
+
+  "skills_programming": ["HTML", "CSS/SASS", "JAVASCRIPT", "REACT", "SVELTE", "NODEJS", "GOLANG", "GIT/GITHUB"],
+  "hobbies": ["BİSİKLET", "MÜZİK", "TWITTER", "GEZMEK"],
+
+  "projects": [
+    {
+      "viewable_on": { "site": 1, "resume": 1 },
+      "title": "Localport",
+      "desc": "Kapalı ağlarda hızlıca port açmak için web teknolojileriyle yazılmış ters tünelleme uygulaması, HTTP2 ve QUIC.",
+      "link": "https://github.com/localport"
+    },
+    {
+      "viewable_on": { "site": 1, "resume": 0 },
+      "title": "OWOP Botu",
+      "desc": "Bir tarayıcı oyunu için bot. Oyunun kodları incelenip tersine mühendislikle bot kodu yazıldı.",
+      "link": "https://batt.al/showcase/owop"
+    },
+    {
+      "viewable_on": { "site": 0, "resume": 1 },
+      "title": "Dondurma Topu Sayacı",
+      "desc": "Dondurma dolabından kaç top dondurma alındığını sayıyor. Obje ve hareket algılama algoritmaları ile yazıldı.",
+      "link": "https://batt.al/showcase/scoop-counter"
+    },
+    {
+      "viewable_on": { "site": 1, "resume": 1 },
+      "title": "Koltuk Doluluğu",
+      "desc": "Sinema salonundaki koltukların dolu/boş durumunu görüntü işleme ile algılıyor. Tensorflow kullanarak yapıldı.",
+      "link": "https://batt.al/showcase/seat-occupancy"
+    },
+    {
+      "viewable_on": { "site": 1, "resume": 1 },
+      "title": "Arbitraj",
+      "desc": "Farklı sitelerden canlı veri çekip arbitraj olasılıklarını hesaplıyor. Bol tersine mühendislik içeriyor.",
+      "link": "https://batt.al/showcase/arb"
+    }
+  ],
+  "experience": [
+    {
+      "title": "Developer",
+      "at": "@own",
+      "remote": true,
+      "desc": "Arbitraj uygulaması üzerinde çalıştım.",
+      "timespan": "2021 September - "
+    },
+    {
+      "title": "Software Developer",
+      "at": "@Chocnette",
+      "remote": true,
+      "desc": "Görüntü işleme ile uygulamalar yaptım.",
+      "timespan": "2020 May - 2021 June"
+    }
+  ],
+  "education": [
+    {
+      "at": "İstanbul Medeniyet Üniversitesi Bilgisayar Müh.",
+      "timespan": "2021 Sep - "
+    },
+    {
+      "at": "Türkiye Teknoloji Takımı (T3)",
+      "timespan": "2017 June - 2020 May"
+    }
+  ]
+}

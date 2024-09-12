@@ -1,0 +1,71 @@
+{
+  "about_short": "JavaScript engineer, interested in user experience, efficiency, reverse engineering.",
+  "about": "I’m a 20 years old tech minded full-stack developer. I am highly motivated and very imaginative by finding inspirations in everyday things, pushing my own boundaries and allowing myself to think out of the box.",
+  "skills_programming": ["HTML", "CSS/SASS", "JAVASCRIPT", "REACT", "SVELTE", "NODEJS", "GOLANG", "GIT/GITHUB"],
+  "hobbies": ["CYCLING", "MUSIC", "TWITTER", "TRAVELING"],
+
+  "projects": [
+    {
+      "viewable_on": { "site": 1, "resume": 1 },
+      "title": "Localport",
+      "desc": "Reverse tunnel tool built with web technologies, HTTP2 and QUIC. Can be used for opening ports on strict networks.",
+      "link": "https://github.com/localport"
+    },
+    {
+      "viewable_on": { "site": 1, "resume": 0 },
+      "title": "OWOP Bots",
+      "desc": "Bots for a web game. reverse engineered and made a custom client for the game.",
+      "link": "https://batt.al/showcase/owop"
+    },
+    {
+      "viewable_on": { "site": 0, "resume": 1 },
+      "title": "Ice Cream Scoop Counter",
+      "desc": "Counts how many scoop taken from a ice cream freezer. Object and motion detection algorithms used.",
+      "link": "https://batt.al/showcase/scoop-counter"
+    },
+    {
+      "viewable_on": { "site": 1, "resume": 1 },
+      "title": "Seat Occupancy",
+      "desc": "Detects empty and full seats in a cinema session. Made with Tensorflow and power of machine learning.",
+      "link": "https://batt.al/showcase/seat-occupancy"
+    },
+    {
+      "viewable_on": { "site": 1, "resume": 1 },
+      "title": "Arbitrage",
+      "desc": "Web scraping, grouping data for same items and comparing differences between items",
+      "link": "https://batt.al/showcase/arbitrage"
+    },
+    {
+      "viewable_on": { "site": 1 },
+      "title": "IOS Photos",
+      "desc": "Clone of ios photos app, on the web",
+      "link": "https://batt.al/photos"
+    }
+  ],
+  "experience": [
+    {
+      "title": "Developer",
+      "at": "@no name",
+      "remote": true,
+      "desc": "Working on a startup project",
+      "timespan": "2021 September - "
+    },
+    {
+      "title": "Software Developer",
+      "at": "@Chocnette",
+      "remote": true,
+      "timespan": "2020 May - 2021 June"
+    }
+  ],
+
+  "education": [
+    {
+      "at": "İstanbul Medeniyet Üniversitesi Bilgisayar Müh.",
+      "timespan": "2021 Sep - "
+    },
+    {
+      "at": "Türkiye Teknoloji Takımı (T3)",
+      "timespan": "2017 June - 2020 May"
+    }
+  ]
+}

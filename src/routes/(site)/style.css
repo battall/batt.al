@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    "Roboto",
+    "Oxygen",
+    "Ubuntu",
+    "Cantarell",
+    "Fira Sans",
+    "Droid Sans",
+    "Helvetica Neue",
+    sans-serif;
+  --font-mono: "Fira Mono", monospace;
+
+  --foreground: black;
+  --background: white;
+  --border: #eaeaea;
+  --gray: #666666;
+  --link: #0070f3;
+
+  --card-border: none;
+  --card-box-shadow: 0 5px 10px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="dark"] {
+  --foreground: white;
+  --background: black;
+  --border: #333333;
+  --gray: #888888;
+  --link: #0076ff;
+
+  --card-border: 1px solid var(--border);
+  --card-box-shadow: none;
+}
+
+::selection {
+  background: var(--foreground);
+  color: var(--background);
+}
+
+body {
+  max-width: 768px;
+  min-height: 100vh;
+  margin: 0;
+
+  color: var(--foreground);
+  background-color: var(--background);
+
+  display: flex;
+  flex-direction: column;
+}
+
+body header {
+  align-items: center;
+}
+
+@media (min-width: 768px) {
+  body {
+    margin: 0 auto;
+    padding: 0 38.4px;
+  }
+  body header {
+    align-items: start;
+  }
+}
+
+@layer utilities {
+  .text-color-444 {
+    color: #444;
+  }
+  .text-color-666 {
+    color: #666;
+  }
+  .text-color-888 {
+    color: #888;
+  }
+  .text-color-999 {
+    color: #999;
+  }
+}
+
+@layer components {
+  .link {
+    @apply text-color-444 hover:text-color-888 mr-1 text-xs transition-colors;
+  }
+
+  .project {
+    @apply hover:text-color-999 flex flex-col transition-colors;
+  }
+  .project-description {
+    @apply text-color-666 group-hover:text-color-999 text-xs transition-colors;
+  }
+}
