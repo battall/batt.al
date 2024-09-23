@@ -1,10 +1,20 @@
 <script>
+  import { Ellipsis, Heart, Info, Play, SlidersHorizontal, Trash2, Upload, VolumeX, X } from "@steeze-ui/lucide-icons";
   import { Icon } from "@steeze-ui/svelte-icon";
-  import { Ellipsis, Heart, Info, Play, SlidersHorizontal, Trash2, Upload, X, VolumeX } from "@steeze-ui/lucide-icons";
 
-  import { library, libraryLoad } from "./stores.svelte.js";
   import { onMount, tick, untrack } from "svelte";
+
+  import ContentInfo from "./ContentInfo.svelte";
   import ContentVideo from "./ContentVideo.svelte";
+  import { library, libraryLoad } from "./stores.svelte.js";
+
+  const ImageLog = (
+    /** @type {{ stopPropagation: () => void; target: { getBoundingClientRect: () => DOMRect; }; }} */ e,
+  ) => {
+    e.stopPropagation();
+    console.log("REAL", rect_to_xywh(e.target.getBoundingClientRect()));
+    console.log("FAKE", getContentRect(contentIndex, viewCurr));
+  };
 
   /** @typedef {{ x: number, y: number, w: number, h: number }} XYWH */
 
