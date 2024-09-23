@@ -25,7 +25,7 @@
   /**
    * returns image rect in which container it is. used for transitions, only returns image rect (no padding etc included).
    * @param {number} contentIndex
-   * @param {"grid" | "view" | "view_fullscreen"} container
+   * @param {"grid" | "view" | "view_fullscreen" | "view_info"} container
    * @returns {XYWH}
    */
   const getContentRect = (contentIndex, container) => {
