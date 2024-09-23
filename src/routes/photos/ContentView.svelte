@@ -31,29 +31,28 @@
   const getContentRect = (contentIndex, container) => {
     let contentRect = { x: 0, y: 0, w: 0, h: 0 };
 
+    const REM = parseFloat(getComputedStyle(document.documentElement).fontSize);
     switch (container) {
       case "grid":
         return rect_to_xywh(getRect(contentIndex));
       case "view": {
         // create two not visible containers with no children, get rect of them, one is fullpage other is not.
         // i think that would be the best way. and watch with resize observer.
-        const image = contentContainer.children[contentIndex].children[0];
-        if (!(image instanceof HTMLImageElement)) throw new Error();
+        const image = { w: library[contentId].size[0], h: library[contentId].size[1] };
 
-        const REM = parseFloat(getComputedStyle(document.documentElement).fontSize);
         const parentRect = { x: 0, y: 8 * REM, w: window.innerWidth, h: window.innerHeight - 16 * REM };
 
         const imagePaddingBottom = Math.max(
           0,
-          Math.min(parentRect.w * (image.naturalHeight / image.naturalWidth) - (parentRect.h - 2 * REM), REM),
+          Math.min(parentRect.w * (image.h / image.w) - (parentRect.h - 2 * REM), REM),
         );
 
-        const scaleX = parentRect.w / image.naturalWidth;
-        const scaleY = (parentRect.h - imagePaddingBottom) / image.naturalHeight;
+        const scaleX = parentRect.w / image.w;
+        const scaleY = (parentRect.h - imagePaddingBottom) / image.h;
         const scale = Math.min(scaleX, scaleY);
 
-        contentRect.w = image.naturalWidth * scale;
-        contentRect.h = image.naturalHeight * scale;
+        contentRect.w = image.w * scale;
+        contentRect.h = image.h * scale;
         contentRect.x = parentRect.x + (parentRect.w - contentRect.w) / 2;
         contentRect.y = parentRect.y + (parentRect.h - (contentRect.h + imagePaddingBottom)) / 2;
 
@@ -75,6 +74,13 @@
         contentRect.y = (parentRect.h - contentRect.h) / 2; // centered...
 
         return contentRect;
+      }
+      // TODO! we should really use invisible cloneNode()'s to calculate rects.
+      case "view_info": {
+        const image = contentContainer.children[contentIndex].children[0];
+        if (!(image instanceof HTMLImageElement)) throw new Error();
+
+        return { x: 0, y: 0, w: window.innerWidth, h: Math.min(window.innerWidth, window.innerHeight - 16 * REM) };
       }
     }
   };
