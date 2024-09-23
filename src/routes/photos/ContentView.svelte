@@ -19,8 +19,8 @@
   /** @typedef {{ x: number, y: number, w: number, h: number }} XYWH */
 
   const rect_to_xywh = (/** @type {DOMRect} */ rect) => ({ x: rect.left, y: rect.top, w: rect.width, h: rect.height });
-  /** @param s {ReturnType<typeof rect_to_xywh>} */
-  const xywh_to_rect = (s) => ({ left: s.x + "px", top: s.y + "px", width: s.w + "px", height: s.h + "px" });
+  /** @param s {XYWH} */
+  const xywh_to_rect = (s) => ({ left: `${s.x}px`, top: `${s.y}px`, width: `${s.w}px`, height: `${s.h}px` });
 
   /**
    * returns image rect in which container it is. used for transitions, only returns image rect (no padding etc included).
@@ -98,14 +98,16 @@
     contentContainer.scrollTo({ left: contentIndex * (window.innerWidth + 40) });
     contentContainer.focus();
 
-    if (!(contentIsOpenAnim.children[0] instanceof HTMLImageElement)) throw new Error();
-    contentIsOpenAnimRun(getRect(contentIndex), contentContainer.getBoundingClientRect());
+    if (!(contentAnimNode.children[0] instanceof HTMLImageElement)) throw new Error();
+    viewNext = "view";
   };
   const hide = () => {
     // on close click
     console.log("HIDE", contentIndex);
-    contentIsOpenAnimRun(getRect(contentIndex), contentContainer.getBoundingClientRect(), true);
-    contentId = "";
+    viewNext = "grid";
+    contentAnim.finished.then(() => {
+      contentId = "";
+    });
   };
 
   //$state.snapshot(contentIndex);
@@ -113,87 +115,96 @@
   /** @type {HTMLDivElement} */
   let page;
   /** @type {HTMLDivElement} */
+  let contentContainerY;
+  /** @type {HTMLDivElement} */
   let contentContainer;
   /** @type {HTMLDivElement} */
   let contentPreview;
 
-  let contentIsOpen = $derived(!!contentId);
   /** @type {HTMLDivElement} */
-  let contentIsOpenAnim;
-  let contentIsOpenAnimDone = $state(false);
+  let contentAnimNode;
+  /** progress */
+  /** @type {Animation} */
+  let contentAnim;
+  /** for autoplay, set this before viewNext
+   * @type {KeyframeAnimationOptions} */
+  let contentAnimOpts = {};
+  let contentAnimDone = $state(true);
 
   $effect(() => {
-    contentIsOpen;
-    untrack(() => show());
+    if (viewCurr === "grid" && contentId !== "") {
+      untrack(() => show());
+    }
   });
 
-  let isFullpage = $state(false);
-  let isFullpageAnimDone = $state(false);
+  /** elements depend on this for layout change
+   * @type {"grid" | "view" | "view_fullscreen" | "view_info"} */
+  let viewCurr = $state("grid");
+  /** animation reacts to this
+   * @type {"grid" | "view" | "view_fullscreen" | "view_info"} */
+  let viewNext = $state("grid");
 
-  //$effect(() => {
-  //  console.log("$effect(): contentIsOpen", contentIsOpen);
-  //  untrack(() => animate(contentIsOpen));
-  //});
+  $effect(() => {
+    console.log("[views]", viewCurr, viewNext);
+  });
 
-  const contentIsOpenAnimRun = (/** @type {DOMRect} */ _rect0, /** @type {DOMRect} */ _rect1, reverse = false) => {
-    let imageSize = library[contentId].download_url
-      .split("/")
-      .slice(-2)
-      .map((i) => parseInt(i));
-    let windowSize = [window.innerWidth, window.innerHeight];
-    let scaleFactor = Math.min(windowSize[0] / imageSize[0], windowSize[1] / imageSize[1]);
+  $effect(() => {
+    console.log("[viewNext]", viewNext);
 
-    if (!(contentIsOpenAnim.children[0] instanceof HTMLImageElement)) throw new Error();
-    contentIsOpenAnim.style.visibility = "visible";
-    contentIsOpenAnim.children[0].src =
-      library[contentId].download_url.slice(0, library[contentId].download_url.indexOf("/", 25)) +
-      `/${(imageSize[0] * scaleFactor).toFixed(0)}/${(imageSize[1] * scaleFactor).toFixed(0)}`;
+    // we prepare the animation here, but element should control the contentAnim progress itself.
+    untrack(async () => {
+      if (viewCurr === viewNext) return;
 
-    contentIsOpenAnimDone = false;
-    //rect0 = rect_to_xywh(getRect(contentIndex));
-    //rect1 = rect_to_xywh(contentContainer.getBoundingClientRect());
-    const rect0 = rect_to_xywh(_rect0);
-    const rect1 = rect_to_xywh(_rect1);
+      if (!contentAnimDone) {
+        contentAnim.finish();
+        await contentAnim.finished;
+      }
 
-    if (!(contentIsOpenAnim.children[0] instanceof HTMLImageElement)) throw new Error();
-    const image = contentIsOpenAnim.children[0];
+      contentAnimDone = false;
 
-    // calculate max scale for the container TODO: window -> container size in the futur.
-    const scaleX = rect1.w / image.naturalWidth;
-    const scaleY = rect1.h / image.naturalHeight;
+      let sizeImage = library[contentId].size;
+      let sizeWindow = [window.innerWidth, window.innerHeight];
+      let scale = Math.min(sizeWindow[0] / sizeImage[0], sizeWindow[1] / sizeImage[1]);
 
-    // To maintain the aspect ratio, take the minimum of the two scaling factors
-    const scale = Math.min(scaleX, scaleY);
-    console.log("[SCALE]", scale);
+      if (!(contentAnimNode.children[0] instanceof HTMLImageElement)) throw new Error();
+      contentAnimNode.style.visibility = "visible";
+      contentAnimNode.children[0].src =
+        library[contentId].download_url.slice(0, library[contentId].download_url.indexOf("/", 25)) +
+        `/${(sizeImage[0] * scale).toFixed(0)}/${(sizeImage[1] * scale).toFixed(0)}`;
 
-    rect1.w = image.naturalWidth * scale;
-    rect1.h = image.naturalHeight * scale;
-    rect1.x += (_rect1.width - rect1.w) / 2;
-    rect1.y += (_rect1.height - rect1.h) / 2;
-    // take care of the offset generated because of centering x, y
+      const rect0 = getContentRect(contentIndex, viewCurr);
+      const rect1 = getContentRect(contentIndex, viewNext);
 
-    console.log("[RECT0:FROM]", rect0);
-    console.log("[RECT1:INTO]", rect1);
+      console.log("[RECT0:FROM]", rect0);
+      console.log("[RECT1:INTO]", rect1);
 
-    const animStates = [xywh_to_rect(rect0), xywh_to_rect(rect1)];
+      const keyframes = [xywh_to_rect(rect0), xywh_to_rect(rect1)];
 
-    if (reverse) animStates.reverse();
+      let contentImage = contentContainer.children[contentIndex].children[0];
+      if (!(contentImage instanceof HTMLImageElement)) return;
 
-    return Promise.all(contentIsOpenAnim.getAnimations().map((anim) => anim.finished))
-      .then(() => {
-        return contentIsOpenAnim.animate(animStates, {
-          duration: 500,
-          easing: "cubic-bezier(0.33, 1, 0.68, 1)",
-        }).finished;
-      })
-      .then(() => {
-        contentIsOpenAnimDone = true;
-        if (!(contentIsOpenAnim.children[0] instanceof HTMLImageElement)) throw new Error();
-        contentIsOpenAnim.style.visibility = "hidden";
-        contentIsOpenAnim.children[0].src = "";
-        return;
+      // hide the image in the horizontal container view, so it doesn't overlap with animated image element
+      contentImage.style.opacity = "0";
+
+      contentAnim = contentAnimNode.animate(keyframes, {
+        duration: 500 * 10,
+        easing: "cubic-bezier(0.33, 1, 0.68, 1)",
+        ...contentAnimOpts,
       });
-  };
+      contentAnim.finished.then(() => {
+        console.log("ANIM FINISHED CB");
+        contentAnimDone = true;
+        contentAnimOpts = {};
+        viewCurr = viewNext;
+
+        if (!(contentAnimNode.children[0] instanceof HTMLImageElement)) throw new Error();
+        contentAnimNode.style.visibility = "hidden";
+        contentAnimNode.children[0].src = "";
+
+        contentImage.style.opacity = "";
+      });
+    });
+  });
 
   if (typeof window !== "undefined") {
     $inspect(contentId).with((type, values_0) => {
@@ -203,10 +214,6 @@
     $inspect(contentIndex).with((type, values_0) => {
       if (type === "init") return;
       console.log("[ContentView] contentIndex  :", values_0);
-    });
-    $inspect(contentIsOpen).with((type, values_0) => {
-      if (type === "init") return;
-      console.log("[ContentView] contentIsOpen :", values_0);
     });
   }
 
@@ -218,84 +225,69 @@
   let isTouching = $state(false);
   let isScrollingDebounce = setTimeout(() => {});
 
-  $effect(() => {
-    // TODO make this function too, without side effects and running on first onMount
-    console.log("[isFullpage]", isFullpage);
-
-    let contentImage = contentContainer?.children[untrack(() => contentIndex)]?.children[0];
-    if (!(contentImage instanceof HTMLImageElement)) return;
-
-    untrack(() => {
-      const rect1 = page.getBoundingClientRect();
-      const rect2 = contentImage.getBoundingClientRect();
-
-      const paddingBottom = Math.max(
-        Math.min(
-          16,
-          contentContainer.clientWidth * parseFloat(contentImage.style.getPropertyValue("--aspect")) -
-            (window.innerHeight - 18 * 16),
-        ),
-        0,
-      );
-
-      const currentAnims = contentIsOpenAnim.getAnimations();
-      if (currentAnims.length > 0) {
-        currentAnims.forEach((anim) => anim.reverse());
-      } else
-        contentIsOpenAnimRun(
-          rect2,
-          !isFullpage
-            ? {
-                ...JSON.parse(JSON.stringify(rect1)),
-                top: 8 * 16,
-                height: window.innerHeight - (16 * 16 + paddingBottom),
-              }
-            : rect1,
-        ).then(() => {
-          isFullpageAnimDone = isFullpage;
-        });
-    });
-
-    return;
-
-    // transition height for the current content doesnt work, ik it would be simpler.
-    // transform scale current content, and set when scale *finished* inset without transform.
-    let container = { width: window.innerWidth, height: window.innerHeight };
-    if (!isFullpage) container.height -= (36 / 4) * (16 * 2); // py-36 = 9rem each side
-
-    // determine the real client size of image (we have size-full etc on image, so .width etc not usable for scaling)
-    let contentImageW = contentImage.width;
-    let contentImageH = contentImage.height;
-    if (contentImage.naturalWidth / contentImage.naturalHeight > contentImageW / contentImageH) {
-      contentImageH = contentImage.naturalHeight * (contentImageW / contentImage.naturalWidth);
-    } else {
-      contentImageW = contentImage.naturalWidth * (contentImageH / contentImage.naturalHeight);
-    }
-
-    let scaleX = container.width / contentImageW;
-    let scaleY = container.height / contentImageH;
-
-    // To maintain the aspect ratio, take the minimum of the two scaling factors
-    let scale = Math.min(scaleX, scaleY);
-
-    console.log({
-      container: { w: container.width, h: container.height },
-      content: { w: contentImageW, h: contentImageH },
-      scale,
-    });
-    contentContainer
-      .animate([{ transform: "scale(1)" }, { transform: `scale(${scale})` }], {
-        duration: 300,
-        easing: "ease-in-out",
-      })
-      .finished.then(() => {
-        isFullpageAnimDone = isFullpage;
-      });
-  });
-
   let contentPreviewDisableSnap = $state(false);
   onMount(() => {
     let window_events = new AbortController();
+
+    let contentInfoRunning = false;
+    contentContainerY.addEventListener(
+      "scroll",
+      (e) => {
+        if (!(e.target instanceof HTMLDivElement)) return;
+        let contentInfoPNext = e.target.scrollTop / (e.target.scrollHeight - window.innerHeight);
+        if (contentInfoP === contentInfoPNext) return;
+        contentInfoP = contentInfoPNext;
+
+        let currentContent = contentContainer.children[contentIndex];
+        if (!(currentContent instanceof HTMLElement)) return;
+        let image = currentContent.children[0];
+        let info = currentContent.children[1];
+        if (!(image instanceof HTMLImageElement)) return;
+        if (!(info instanceof HTMLDivElement)) return;
+
+        if (!contentInfoRunning) {
+          contentInfoRunning = true;
+          console.log(viewCurr, viewNext);
+
+          contentAnimOpts = { playbackRate: 0, easing: undefined };
+          if (viewCurr === "view") {
+            viewNext = "view_info";
+          }
+          if (viewCurr === "view_info") {
+            viewNext = "view";
+          }
+        }
+
+        contentAnim.playbackRate = 0;
+        contentAnim.currentTime = 5000 * (viewNext === "view" ? 1 - contentInfoP : contentInfoP);
+
+        const rect0 = getContentRect(contentIndex, viewCurr);
+        const rect1 = getContentRect(contentIndex, viewNext);
+
+        info.style.transform = `translateY(calc(${contentInfoP < 0.2 ? 100 : 0}%))`;
+        info.style.opacity = contentInfoP.toFixed(3);
+        info.children[0].style.transform =
+          contentInfoP < 0.2
+            ? ""
+            : `translateY(${-1 * (rect0.y + rect0.h - (rect1.y + rect1.h)) * (viewCurr === "view" ? contentInfoP : 1 - contentInfoP)}px)`;
+
+        if (contentInfoP === 0 || contentInfoP === 1) {
+          contentAnim.playbackRate = 1; // cant finish animation with 0 playbackrate.... yea nice design!
+          contentAnim.finish();
+          contentInfoRunning = false;
+
+          contentAnim.finished.then(() => {
+            viewCurr = contentInfoP === 0 ? "view" : "view_info";
+            viewNext = viewCurr;
+          });
+
+          info.style.transform = "";
+          info.style.opacity = "";
+          info.children[0].style.transform = "";
+        }
+      },
+      { signal: window_events.signal, passive: true },
+    );
 
     let scrollCurr = 0; // currently scrolling element, 1 for container, 2 for preview
     let scrollTries = 0; // scroll tries of the other element, if it gets to 2, `scrollCurr` changes
@@ -500,24 +492,30 @@
       observer_resize.disconnect();
     };
   });
+
+  let contentInfoRunning = $state(false);
+  let contentInfoP = $state(0);
 </script>
 
-<div bind:this={contentIsOpenAnim} class="pointer-events-none fixed inset-0 z-50">
-  <img alt="" class="mx-auto size-full rounded object-cover" />
+<div bind:this={contentAnimNode} class="pointer-events-none fixed inset-0 z-50">
+  <img
+    alt=""
+    class="mx-auto size-full rounded object-cover"
+    class:[&]:rounded-none={viewCurr === "view_info" || viewNext === "view_info"}
+  />
 </div>
 
 <div
   bind:this={page}
   class="pointer-events-none fixed z-40 flex size-full flex-col bg-background/0
   pb-[max(var(--safe-b),1.75rem)] pt-[max(var(--safe-t),1.25rem)] transition-[opacity_background-color] duration-300"
-  class:[&]:pointer-events-auto={contentId}
-  class:[&]:bg-background={contentId}
-  class:[&&]:bg-black={isFullpage}
+  class:[&]:pointer-events-auto={viewCurr !== "grid"}
+  class:[&]:bg-background={viewCurr !== "grid"}
+  class:[&&]:bg-black={viewCurr === "view_fullscreen"}
 >
   <div
     class="mb-10 flex items-center justify-between px-4 opacity-0 transition-opacity duration-300"
-    class:[&]:opacity-100={contentId}
-    class:[&&]:opacity-0={isFullpage}
+    class:[&]:opacity-100={viewNext === "view"}
   >
     <div class="flex flex-col">
       <h2 class="text-xl font-bold">Wednesday 15 {isScrolling || isTouching}</h2>
@@ -531,59 +529,85 @@
 
   <div class="-z-20 min-h-0 flex-grow"></div>
   <div
-    bind:this={contentContainer}
-    class="fixed inset-x-0 bottom-32 top-32 -z-10 flex snap-x snap-mandatory gap-10 overflow-x-auto opacity-0
+    class="fixed inset-0 -z-10 snap-y snap-mandatory overflow-y-auto"
+    class:scrollbar-none={1}
+    bind:this={contentContainerY}
+  >
+    <div class="h-px w-full snap-center"></div>
+    <div
+      bind:this={contentContainer}
+      class="sticky top-0 flex size-full snap-x snap-mandatory gap-10
+          overflow-x-auto overflow-y-hidden py-32 opacity-0
           *:h-full *:min-w-full *:snap-center *:snap-always
           *:pb-[clamp(0px,calc(100%*var(--aspect)-(100vh-18rem)),1rem)]"
-    class:[&]:opacity-100={contentId && contentIsOpenAnimDone}
-    class:[&]:inset-y-0={isFullpageAnimDone}
-    class:[&]:*:pb-0={isFullpageAnimDone}
-    class:scrollbar-none={true}
-  >
-    {#each Object.values(library) as content, i (content.id)}
-      <!-- its so f ing weird, but if i don't add h-full to this, safari doesnt care max-h-full on img (which is ok i think?), but firefox is fine af-->
-      <button
-        style:--aspect={content.size[1] / content.size[0]}
-        onclick={(e) => {
-          // TODO this emits twice??
-          isFullpage = !isFullpage;
-        }}
-      >
-        <img
-          alt=""
-          data-src={content.download_url}
+      class:[&]:opacity-100={viewCurr !== "grid"}
+      class:[&]:*:pb-0={viewCurr === "view_fullscreen" || viewCurr === "view_info"}
+      class:scrollbar-none={1}
+    >
+      {#each Object.values(library) as content, i (content.id)}
+        <!-- its so f ing weird, but if i don't add h-full to this, safari doesnt care max-h-full on img (which is ok i think?), but firefox is fine af-->
+        <button
+          class="relative"
+          class:[&]:-mt-32={viewCurr === "view_info"}
           style:--aspect={content.size[1] / content.size[0]}
-          class="mx-auto max-h-full rounded object-scale-down"
           onclick={(e) => {
-            e.stopPropagation();
-            console.log("REAL", rect_to_xywh(e.target.getBoundingClientRect()));
-            console.log("FAKE", getContentRect(contentIndex, isFullpage ? "view_fullscreen" : "view"));
+            // TODO this emits twice??
+
+            // if clicked element (target) is not button or img, return
+            if (e.target !== e.currentTarget && e.target !== e.currentTarget.children[0]) return;
+
+            // if is in info view return;
+            if (viewCurr === "view_info") return;
+            if (viewCurr === "view") viewNext = "view_fullscreen";
+            if (viewCurr === "view_fullscreen") viewNext = "view";
           }}
-        />
-        {#if content.video}
-          <video
-            src={content.video + "#t=0.1"}
-            class="absolute ml-[50%] hidden max-h-full -translate-x-1/2 -translate-y-full rounded object-scale-down"
-            playsinline
-            preload="metadata"
-          >
-            <track kind="captions" />
-          </video>
-          <ContentVideo
-            class="absolute ml-[50%] -translate-x-1/2 -translate-y-full"
-            src={content.video}
-            size={content.size}
+        >
+          <img
+            alt=""
+            width={content.size[0]}
+            height={content.size[0]}
+            data-src={content.download_url}
+            style:--aspect={content.size[1] / content.size[0]}
+            class="mx-auto max-h-full w-[unset] rounded object-contain"
+            class:[&]:w-full={viewCurr === "view_info"}
+            class:[&]:h-[100vw]={viewCurr === "view_info"}
+            class:[&]:object-cover={viewCurr === "view_info"}
+            class:[&]:rounded-none={viewCurr === "view_info"}
           />
-        {/if}
-      </button>
-    {/each}
+          <div
+            class="absolute w-full opacity-0 transition-transform duration-300"
+            class:[&]:static={viewCurr === "view_info"}
+            class:opacity-100={viewCurr === "view_info"}
+          >
+            <ContentInfo />
+          </div>
+          {#if false && content.video}
+            <video
+              src={content.video + "#t=0.1"}
+              class="absolute ml-[50%] hidden max-h-full -translate-x-1/2 -translate-y-full rounded object-scale-down"
+              playsinline
+              preload="metadata"
+            >
+              <track kind="captions" />
+            </video>
+            <ContentVideo
+              class="absolute ml-[50%] -translate-x-1/2 -translate-y-full"
+              src={content.video || ""}
+              size={content.size}
+            />
+          {/if}
+        </button>
+      {/each}
+    </div>
+    <div class="invisible h-96">this div to increase scroll height, so fucking messy tbh</div>
+    <div class="h-px w-full snap-center"></div>
   </div>
   <div
     bind:this={contentPreview}
     class="mb-6 mt-3 flex min-h-8 snap-x snap-mandatory gap-1 overflow-x-auto px-[calc(50%-0.625rem)] transition-opacity"
     class:scrollbar-none={true}
     class:[&]:snap-none={contentPreviewDisableSnap}
-    class:opacity-0={!contentId || isFullpage}
+    class:opacity-0={viewCurr !== "view"}
     class:translate-x-0={true ||
       "this is to imply will-change transform... otherwise chrome does fullpage repaint like crazy"}
   >
@@ -619,7 +643,7 @@
 
   <div
     class="bottom-0 mx-auto flex w-full max-w-96 items-center justify-around px-6 text-primary transition-opacity"
-    class:opacity-0={!contentId || isFullpage}
+    class:opacity-0={viewCurr === "grid" || viewCurr === "view_fullscreen"}
   >
     <Icon src={Upload} theme="solid" class="flex size-11 rounded-full bg-[#f3f3f3] p-3" />
     <div class="flex rounded-full bg-[#f3f3f3] px-1">
