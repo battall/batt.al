@@ -29,9 +29,9 @@
    * @returns {XYWH}
    */
   const getContentRect = (contentIndex, container) => {
-    let contentRect = { x: 0, y: 0, w: 0, h: 0 };
+    const contentRect = { x: 0, y: 0, w: 0, h: 0 };
 
-    const REM = parseFloat(getComputedStyle(document.documentElement).fontSize);
+    const REM = Number.parseFloat(getComputedStyle(document.documentElement).fontSize);
     switch (container) {
       case "grid":
         return rect_to_xywh(getRect(contentIndex));
@@ -88,7 +88,7 @@
   /** @type {{ contentId: string, getRect: (contentIndex: number) => DOMRect }} */
   let { contentId = $bindable(""), getRect } = $props();
   /** index 0 to content.length, based on container */
-  let contentIndex = $derived(Object.keys(library).findIndex((id) => id === contentId));
+  const contentIndex = $derived(Object.keys(library).findIndex((id) => id === contentId));
 
   const show = () => {
     // on contentId change
@@ -162,15 +162,13 @@
 
       contentAnimDone = false;
 
-      let sizeImage = library[contentId].size;
-      let sizeWindow = [window.innerWidth, window.innerHeight];
-      let scale = Math.min(sizeWindow[0] / sizeImage[0], sizeWindow[1] / sizeImage[1]);
+      const sizeImage = library[contentId].size;
+      const sizeWindow = [window.innerWidth, window.innerHeight];
+      const scale = Math.min(sizeWindow[0] / sizeImage[0], sizeWindow[1] / sizeImage[1]);
 
       if (!(contentAnimNode.children[0] instanceof HTMLImageElement)) throw new Error();
       contentAnimNode.style.visibility = "visible";
-      contentAnimNode.children[0].src =
-        library[contentId].download_url.slice(0, library[contentId].download_url.indexOf("/", 25)) +
-        `/${(sizeImage[0] * scale).toFixed(0)}/${(sizeImage[1] * scale).toFixed(0)}`;
+      contentAnimNode.children[0].src = `${library[contentId].download_url.slice(0, library[contentId].download_url.indexOf("/", 25))}/${(sizeImage[0] * scale).toFixed(0)}/${(sizeImage[1] * scale).toFixed(0)}`;
 
       const rect0 = getContentRect(contentIndex, viewCurr);
       const rect1 = getContentRect(contentIndex, viewNext);
@@ -180,7 +178,7 @@
 
       const keyframes = [xywh_to_rect(rect0), xywh_to_rect(rect1)];
 
-      let contentImage = contentContainer.children[contentIndex].children[0];
+      const contentImage = contentContainer.children[contentIndex].children[0];
       if (!(contentImage instanceof HTMLImageElement)) return;
 
       // hide the image in the horizontal container view, so it doesn't overlap with animated image element
@@ -227,21 +225,21 @@
 
   let contentPreviewDisableSnap = $state(false);
   onMount(() => {
-    let window_events = new AbortController();
+    const window_events = new AbortController();
 
     let contentInfoRunning = false;
     contentContainerY.addEventListener(
       "scroll",
       (e) => {
         if (!(e.target instanceof HTMLDivElement)) return;
-        let contentInfoPNext = e.target.scrollTop / (e.target.scrollHeight - window.innerHeight);
+        const contentInfoPNext = e.target.scrollTop / (e.target.scrollHeight - window.innerHeight);
         if (contentInfoP === contentInfoPNext) return;
         contentInfoP = contentInfoPNext;
 
-        let currentContent = contentContainer.children[contentIndex];
+        const currentContent = contentContainer.children[contentIndex];
         if (!(currentContent instanceof HTMLElement)) return;
-        let image = currentContent.children[0];
-        let info = currentContent.children[1];
+        const image = currentContent.children[0];
+        const info = currentContent.children[1];
         if (!(image instanceof HTMLImageElement)) return;
         if (!(info instanceof HTMLDivElement)) return;
 
@@ -292,7 +290,7 @@
     let scrollCurr = 0; // currently scrolling element, 1 for container, 2 for preview
     let scrollTries = 0; // scroll tries of the other element, if it gets to 2, `scrollCurr` changes
     /** @param {number} index element index */
-    let scrollMutex = (index) => {
+    const scrollMutex = (index) => {
       if (scrollCurr === index) {
         scrollTries = 0;
         return true;
@@ -400,7 +398,7 @@
 
     const observer = new IntersectionObserver(
       (entries) => {
-        for (let entry of entries) {
+        for (const entry of entries) {
           const img = entry.target.children[0];
 
           if (!entry.isIntersecting) continue;
@@ -409,20 +407,20 @@
 
           //observer.unobserve(entry.target); // Stop observing the image once it's loaded
           if (!img.src && img.dataset.src.startsWith("https://picsum.photos")) {
-            let imageSize = img.dataset.src
+            const imageSize = img.dataset.src
               .split("/")
               .slice(-2)
-              .map((i) => parseInt(i));
-            let windowSize = [window.innerWidth, window.innerHeight];
-            let scaleFactor = Math.min(windowSize[0] / imageSize[0], windowSize[1] / imageSize[1]);
+              .map((i) => Number.parseInt(i));
+            const windowSize = [window.innerWidth, window.innerHeight];
+            const scaleFactor = Math.min(windowSize[0] / imageSize[0], windowSize[1] / imageSize[1]);
 
-            img.src =
-              img.dataset.src.slice(0, img.dataset.src.indexOf("/", 25)) +
-              `/${(imageSize[0] * scaleFactor).toFixed(0)}/${(imageSize[1] * scaleFactor).toFixed(0)}`; // Load the image
+            img.src = `${img.dataset.src.slice(0, img.dataset.src.indexOf("/", 25))}/${(imageSize[0] * scaleFactor).toFixed(0)}/${(imageSize[1] * scaleFactor).toFixed(0)}`; // Load the image
 
             // load resolution that is max at current screen size. (it doesn't care about dpi)
             // `
-            img.onload = () => (img.style.opacity = "1");
+            img.onload = () => {
+              img.style.opacity = "1";
+            };
           } else if (!img.src) {
             img.src = img.dataset.src;
           }
@@ -432,7 +430,7 @@
     );
     const observer2 = new IntersectionObserver(
       (entries) => {
-        for (let entry of entries) {
+        for (const entry of entries) {
           const img = entry.target.children[0];
 
           if (!entry.isIntersecting) continue;
@@ -442,18 +440,20 @@
           //observer.unobserve(entry.target); // Stop observing the image once it's loaded
 
           if (!img.src && img.dataset.src.startsWith("https://picsum.photos")) {
-            let imageSize = img.dataset.src
+            const imageSize = img.dataset.src
               .split("/")
               .slice(-2)
-              .map((i) => parseInt(i));
-            let containerSize = [page.clientWidth, page.clientHeight];
-            let scaleFactor = Math.min(containerSize[0] / imageSize[0], containerSize[1] / imageSize[1]);
+              .map((i) => Number.parseInt(i));
+            const containerSize = [page.clientWidth, page.clientHeight];
+            const scaleFactor = Math.min(containerSize[0] / imageSize[0], containerSize[1] / imageSize[1]);
 
             img.src = img.dataset.src; // Load the image
 
             // load resolution that is max at current screen size. (it doesn't care about dpi)
             // .slice(0, img.dataset.src.indexOf("/", 25)) + `/${parseInt(imageSize[0] * scaleFactor)}/${parseInt(imageSize[1] * scaleFactor)}`
-            img.onload = () => (img.style.opacity = "1");
+            img.onload = () => {
+              img.style.opacity = "1";
+            };
           } else if (!img.src) {
             img.src = img.dataset.src;
           }
