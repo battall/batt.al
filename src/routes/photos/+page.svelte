@@ -339,12 +339,6 @@
   ></ContentView>
 {/await}
 
-<span class="hidden">
-  - imo the best solution would be increase the height of menu section when snapped - so if user scrolls one more time
-  it transitions, - after that scroll ends disable body overflow, enable photos overflow, - but i couldn't find a way to
-  increase scroll height without layout shift.
-</span>
-
 <div
   onscroll={(e) => {
     if (e.target instanceof HTMLElement) {
