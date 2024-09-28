@@ -5,7 +5,7 @@ import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
 const config = {
   // Consult https://kit.svelte.dev/docs/integrations#preprocessors
   // for more information about preprocessors
-  kit: { adapter: adapter() },
+  kit: { adapter: adapter(), inlineStyleThreshold: 1024 * 1024 * 32 }, // 32kb
   compilerOptions: { runes: undefined, modernAst: true },
   preprocess: vitePreprocess(),
 };
