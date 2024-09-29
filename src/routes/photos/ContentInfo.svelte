@@ -1,6 +1,9 @@
-<div class="bg-[#ffffff] *:px-4">
-  <input class="h-12 w-full border-b border-[#ebebec] bg-[#ffffff] placeholder-[#c5c5c7]" placeholder="Add a Caption" />
-  <div class=" flex flex-col gap-4 bg-[#f7f7fa]">
+<div class="bg-[#ffffff]">
+  <input
+    class="h-12 w-full border-b border-[#ebebec] bg-[#ffffff] px-4 placeholder-[#c5c5c7]"
+    placeholder="Add a Caption"
+  />
+  <div class="flex flex-col gap-4 bg-[#f7f7fa] px-4">
     <div class="flex justify-between pt-5">
       <div class="text-start">
         <p class="text-[#000000]">Sunday &bull; 18 Aug 2024 &bull; 15:09</p>
@@ -17,7 +20,7 @@
         <p>Wide Camera -- 26 mm &fnof;1.8</p>
         <p>12 MP &bull; 4032 x 3024 &bull; 3,8 MB</p>
       </div>
-      <div class="grid grid-cols-5 divide-x bg-[#ececf0] text-sm text-[#828288] *:border-[#d3d3d7]">
+      <div class="grid grid-cols-5 bg-[#ececf0] text-sm text-[#828288] [&_span]:border-[#d3d3d7]">
         <span class="text-start">ISO 800</span>
         <span>26 mm</span>
         <span>0 ev</span>
