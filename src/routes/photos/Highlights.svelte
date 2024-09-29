@@ -1,6 +1,6 @@
 <script>
-  import { Icon } from "@steeze-ui/svelte-icon";
   import { ChevronRight } from "@steeze-ui/lucide-icons";
+  import { Icon } from "@steeze-ui/svelte-icon";
 
   import { library } from "./stores.svelte";
 
@@ -118,11 +118,7 @@
 
     <div class:container-h={1}>
       <div class="col-span-2 row-span-2 aspect-square snap-start">
-        <img
-          alt=""
-          src="https://picsum.photos/300?random={Date.now().toFixed(0)}"
-          class="opacity-1 rounded-2xl transition-opacity"
-        />
+        <img alt="" src="https://picsum.photos/300?random=5" class="opacity-1 rounded-2xl transition-opacity" />
       </div>
       {#each { length: 20 } as _, i}
         <div class="aspect-square snap-start">
