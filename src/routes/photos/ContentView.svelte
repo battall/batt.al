@@ -15,9 +15,7 @@
   /** @type {{  _this: HTMLDivElement | undefined, contentAnim: Animation, contentAnimOpts: KeyframeAnimationOptions}} */
   let { _this = $bindable(), contentAnim = $bindable(), contentAnimOpts = $bindable() } = $props();
 
-  let contentId = $state(
-    (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("id")) || "",
-  );
+  let contentId = $state((typeof window !== "undefined" && new URLSearchParams(window.location.search).get("id")) || "");
   /** index 0 to content.length, based on container */
   const contentIndex = $derived(Object.keys(library).findIndex((id) => id === contentId));
 
@@ -85,16 +83,13 @@
     let contentInfoRunning = false;
 
     // scroll to top on info
-    if (route === "/content/info")
-      contentContainerY.scrollTo({ top: contentContainerY.scrollHeight - contentContainerY.clientHeight });
+    if (route === "/content/info") contentContainerY.scrollTo({ top: contentContainerY.scrollHeight - contentContainerY.clientHeight });
     contentContainerY.addEventListener(
       "scroll",
       async (e) => {
         if (!(e.target instanceof HTMLDivElement)) return;
-        const contentInfoPNext = Math.min(
-          Math.max(e.target.scrollTop / (e.target.scrollHeight - window.innerHeight), 0),
-          1,
-        ); // clamp to between 0-1, safari sends negative and more than scroll values
+        // clamp to between 0-1, safari sends negative and more than scroll values
+        const contentInfoPNext = Math.min(Math.max(e.target.scrollTop / (e.target.scrollHeight - window.innerHeight), 0), 1);
         if (contentInfoP === contentInfoPNext) return;
         //console.log(
         //  contentInfoP > contentInfoPNext ? "+y" : "-y",
@@ -389,11 +384,7 @@
             >
               <track kind="captions" />
             </video>
-            <ContentVideo
-              class="absolute ml-[50%] -translate-x-1/2 -translate-y-full"
-              src={content.video || ""}
-              size={content.size}
-            />
+            <ContentVideo class="absolute ml-[50%] -translate-x-1/2 -translate-y-full" src={content.video || ""} size={content.size} />
           {/if}
         </button>
       {/each}
@@ -407,8 +398,7 @@
     class:scrollbar-none={true}
     class:[&]:snap-none={contentPreviewDisableSnap}
     class:opacity-0={route === "/content/info" || route === "/content/expanded"}
-    class:translate-x-0={true ||
-      "this is to imply will-change transform... otherwise chrome does fullpage repaint like crazy"}
+    class:translate-x-0={true || "this is to imply will-change transform... otherwise chrome does fullpage repaint like crazy"}
   >
     {#each Object.values(library) as content, i}
       <button
@@ -431,11 +421,7 @@
           });
         }}
       >
-        <img
-          alt=""
-          data-src={content.src_resize([64, 64])}
-          class="opacity-1 size-full rounded object-cover transition-opacity"
-        />
+        <img alt="" data-src={content.src_resize([64, 64])} class="opacity-1 size-full rounded object-cover transition-opacity" />
       </button>
     {/each}
   </div>
@@ -452,7 +438,6 @@
         src={InformationCircle}
         theme={route === "/content/info" ? "solid" : "outline"}
         onclick={() => {
-          console.log("clicked info");
           goto(route === "/content" ? `info?id=${contentId}` : `../?id=${contentId}`, { keepFocus: true });
         }}
       ></Icon>
@@ -461,6 +446,3 @@
     <Icon src={Trash2} theme="solid" class="flex size-11 rounded-full bg-[#f3f3f3] p-3" />
   </div>
 </div>
-
-<style type="postcss">
-</style>
