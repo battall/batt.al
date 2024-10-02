@@ -319,7 +319,7 @@
 
   <div class="-z-20 min-h-0 flex-grow"></div>
   <div
-    class="fixed inset-0 -z-10 snap-y snap-mandatory overflow-y-auto
+    class="fixed inset-0 -z-10 snap-y snap-mandatory overflow-y-auto contain-strict [content-visibility:auto]
         before:absolute before:top-0 before:h-px before:w-full before:snap-start
         after:absolute after:bottom-0 after:h-px after:w-full after:snap-start"
     class:scrollbar-none={1}
