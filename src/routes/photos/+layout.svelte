@@ -257,6 +257,8 @@
 
 <ContentView bind:_this={contentView} bind:contentAnim bind:contentAnimOpts />
 
+{@render children()}
+
 <style type="postcss">
   .title::after {
     content: "";
