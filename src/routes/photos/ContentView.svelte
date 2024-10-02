@@ -7,10 +7,13 @@
 
   import { beforeNavigate, goto, onNavigate, replaceState } from "$app/navigation";
   import { page, updated } from "$app/stores";
+  import VirtualList from "$lib/VirtualList.svelte";
   import ContentInfo from "./ContentInfo.svelte";
   import ContentVideo from "./ContentVideo.svelte";
   import { ImageLoader } from "./imageLoader";
   import { library, libraryLoad, routes } from "./stores.svelte.js";
+
+  let libraryArray = $derived(Object.values(library));
 
   /** @type {{  _this: HTMLDivElement | undefined, contentAnim: Animation, contentAnimOpts: KeyframeAnimationOptions}} */
   let { _this = $bindable(), contentAnim = $bindable(), contentAnimOpts = $bindable() } = $props();
@@ -28,8 +31,11 @@
   onMount(() => {
     libraryLoad.then(() => {
       console.log("[ContentView] scroll", contentId, contentIndex);
-      contentContainer.scrollTo({ left: contentIndex * (window.innerWidth + 40) });
-      contentContainer.focus();
+      scrollOffset = contentIndex * (containerW + 40); // update virtual list, await for dom, then scroll our container.
+      tick().then(() => {
+        contentContainer.scrollTo({ left: scrollOffset });
+        contentContainer.focus();
+      });
     });
   });
   beforeNavigate((navigation) => {
@@ -37,11 +43,16 @@
     if (navigation.from?.route.id === "/photos" && navigation.to?.route.id === "/photos/content") {
       contentId = navigation.to?.url.searchParams.get("id") || "";
       console.log("[NAVIGATION][ContentView] before", contentId, contentIndex);
-      contentContainer.scrollTo({ top: 0, left: contentIndex * (window.innerWidth + 40) });
-      contentContainer.focus();
+      scrollOffset = contentIndex * (containerW + 40); // update virtual list, await for dom, then scroll our container.
+      tick().then(() => {
+        contentContainer.scrollTo({ left: scrollOffset });
+        contentContainer.focus();
+      });
       console.log("[NAVIGATION][ContentView] before, setting contentId");
     }
   });
+
+  let scrollOffset = $state(0);
 
   /** @type {HTMLDivElement} */
   let main;
@@ -98,7 +109,7 @@
         //);
         contentInfoP = contentInfoPNext;
 
-        const info = contentContainer.children[contentIndex]?.children[1];
+        const info = contentContainer.children[0].children[contentIndex % 3]?.children[1]; // TODO this 3 must be gathered from VirtualList.visibleItemCount.
         if (!(info instanceof HTMLDivElement)) return;
 
         if (!contentInfoRunning) {
@@ -186,6 +197,7 @@
       "scroll",
       (e) => {
         if (!(e.target instanceof HTMLDivElement)) return;
+        scrollOffset = e.target.scrollLeft; // update the virtual list no matter what
         if (!scrollMutex(1)) return;
 
         //console.log("[CONTAINER SCROLLLEFT]", e.target.scrollLeft);
@@ -276,7 +288,7 @@
         }
       }
     });
-    observer_resize.observe(contentContainer);
+    //observer_resize.observe(contentContainer);
 
     return () => {
       window_events.abort();
@@ -286,6 +298,8 @@
 
   let contentInfoRunning = $state(false);
   let contentInfoP = $state(0);
+
+  let containerW = $state(0);
 </script>
 
 <div
@@ -329,65 +343,81 @@
       use:ImageLoader={{ update: library }}
       bind:this={contentContainer}
       bind:this={_this}
-      class="sticky top-0 flex size-full snap-x snap-mandatory gap-10
-          overflow-x-auto overflow-y-hidden py-32
-          *:h-full *:min-w-full *:snap-center *:snap-always
-          *:pb-[clamp(0px,calc(100%*var(--aspect)-(100vh-18rem)),1rem)]"
+      class="sticky top-0 size-full snap-x snap-mandatory
+          overflow-x-auto overflow-y-hidden py-32"
       class:[&]:py-0={route === "/content/expanded"}
-      class:[&]:*:-mt-32={route === "/content/info"}
-      class:[&]:*:pb-0={route === "/content/info" || route === "/content/expanded"}
-      class:[&]:*:h-[calc(100%+16rem)]={route === "/content/info"}
+      class:[&]:*:*:-mt-32={route === "/content/info"}
+      class:[&]:*:*:pb-0={route === "/content/info" || route === "/content/expanded"}
+      class:[&]:*:*:h-[calc(100%+16rem)]={route === "/content/info"}
       class:scrollbar-none={1}
+      bind:clientWidth={containerW}
     >
-      {#each Object.values(library) as content, i (content.id)}
-        <!-- its so f ing weird, but if i don't add h-full to this, safari doesnt care max-h-full on img (which is ok i think?), but firefox is fine af-->
-        <button
-          class="relative [content-visibility:auto]"
-          style:--aspect={content.size[1] / content.size[0]}
-          onclick={(e) => {
-            // TODO this emits twice??
+      {#await libraryLoad then _}
+        <VirtualList items={libraryArray} itemSize={containerW + 40} containerSize={containerW} {scrollOffset} let:item let:offset>
+          <button
+            class="relative h-full snap-center snap-always -scroll-mx-5 px-5 pb-[clamp(0px,calc(100vw*var(--aspect)-(100vh-18rem)),1rem)]"
+            style="width:{containerW + 40}px;left:{offset}px;"
+            style:--aspect={item.size[1] / item.size[0]}
+            onclick={(e) => {
+              // TODO this emits twice??
 
-            // if clicked element (target) is not button or img, return
-            if (e.target !== e.currentTarget && e.target !== e.currentTarget.children[0]) return;
+              // if clicked element (target) is not button or img, return
+              if (e.target !== e.currentTarget && e.target !== e.currentTarget.children[0]) return;
 
-            // if is in info view return;
-            if (route === "/content/info") return;
-            if (route === "/content") goto("expanded?id=" + content.id);
-            if (route === "/content/expanded") goto("../?id=" + content.id);
-          }}
-        >
-          <img
-            alt=""
-            width={content.size[0]}
-            height={content.size[1]}
-            src={`data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="${content.size[0]}" height="${content.size[1]}"></svg>`}
-            data-src={content.src}
-            style:--aspect={content.size[1] / content.size[0]}
-            class="mx-auto max-h-full w-auto rounded object-contain"
-            class:[&]:h-[100vw]={route === "/content/info"}
-            class:[&]:object-cover={route === "/content/info"}
-            class:[&]:rounded-none={route === "/content/info"}
-          />
-          <div
-            class="absolute size-full opacity-0 transition-transform duration-300"
-            class:[&]:static={route === "/content/info"}
-            class:opacity-100={route === "/content/info"}
+              // if is in info view return;
+              if (route === "/content/info") return;
+              if (route === "/content") goto("expanded?id=" + item.id);
+              if (route === "/content/expanded") goto("../?id=" + item.id);
+            }}
           >
-            <ContentInfo />
-          </div>
-          {#if false && content.video}
-            <video
-              src={content.video + "#t=0.1"}
-              class="absolute ml-[50%] hidden max-h-full -translate-x-1/2 -translate-y-full rounded object-scale-down"
-              playsinline
-              preload="metadata"
+            {#key item}
+              <img
+                alt=""
+                width={item.size[0]}
+                height={item.size[1]}
+                src={`data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="${item.size[0]}" height="${item.size[1]}"></svg>`}
+                onload={function () {
+                  if (!this.src) throw new Error();
+
+                  if (this.src.slice(0, 4) !== "data") return;
+                  let image = new Image();
+                  image.onload = () => {
+                    this.src = image.src;
+                  };
+                  image.src = item.src_resize([
+                    Math.max(window.innerWidth, window.innerHeight) * window.devicePixelRatio,
+                    Math.max(window.innerWidth, window.innerHeight) * window.devicePixelRatio,
+                  ]);
+                }}
+                style:--aspect={item.size[1] / item.size[0]}
+                class="mx-auto max-h-full w-auto rounded object-contain"
+                class:[&]:w-full={route === "/content/info"}
+                class:[&]:h-[100vw]={route === "/content/info"}
+                class:[&]:object-cover={route === "/content/info"}
+                class:[&]:rounded-none={route === "/content/info"}
+              />
+            {/key}
+            <div
+              class="absolute size-full opacity-0 transition-transform duration-300"
+              class:[&]:static={route === "/content/info"}
+              class:opacity-100={route === "/content/info"}
             >
-              <track kind="captions" />
-            </video>
-            <ContentVideo class="absolute ml-[50%] -translate-x-1/2 -translate-y-full" src={content.video || ""} size={content.size} />
-          {/if}
-        </button>
-      {/each}
+              <ContentInfo />
+            </div>
+            {#if false && item.video}
+              <video
+                src={item.video + "#t=0.1"}
+                class="absolute ml-[50%] hidden max-h-full -translate-x-1/2 -translate-y-full rounded object-scale-down"
+                playsinline
+                preload="metadata"
+              >
+                <track kind="captions" />
+              </video>
+              <ContentVideo class="absolute ml-[50%] -translate-x-1/2 -translate-y-full" src={item.video || ""} size={item.size} />
+            {/if}
+          </button>
+        </VirtualList>
+      {/await}
     </div>
     <div class="invisible h-96">this div to increase scroll height, so fucking messy tbh</div>
   </div>
