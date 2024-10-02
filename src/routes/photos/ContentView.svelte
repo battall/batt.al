@@ -114,7 +114,7 @@
 
         if (!contentInfoRunning) {
           contentInfoRunning = true;
-          contentAnimOpts = { easing: undefined };
+          contentAnimOpts = { easing: undefined, playbackRate: 0 };
           switch (route) {
             case "/content":
               await goto(`info?id=${contentId}`);
@@ -127,7 +127,6 @@
               break;
           }
 
-          contentAnim.pause();
           console.log("[ContentView] goto done");
         }
 
@@ -153,11 +152,9 @@
           contentInfoRunning = false;
           if (url) {
             goto(url).then(() => {
-              contentAnim.playbackRate = 1; // cant finish animation with 0 playbackrate.... yea nice design!
               contentAnim.finish();
             });
           } else {
-            contentAnim.playbackRate = 1; // cant finish animation with 0 playbackrate.... yea nice design!
             contentAnim.finish();
           }
 
