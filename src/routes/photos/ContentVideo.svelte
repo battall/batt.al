@@ -44,10 +44,7 @@
     <track kind="captions" />
   </video>
   <div class="absolute bottom-0 flex w-full flex-col gap-3 px-4 pb-5">
-    <div
-      class="relative z-30 w-full text-white
-      *:absolute *:bottom-0 *:w-full *:transition-opacity *:duration-300"
-    >
+    <div class="relative z-30 w-full text-white" class:texts={1}>
       <div class="z-40 flex items-center justify-between {isPointerDown ? 'opacity-0' : 'opacity-100'}">
         <Icon
           class="size-6 rounded-full fill-white"
@@ -101,6 +98,10 @@
 </div>
 
 <style type="postcss">
+  .texts {
+    @apply *:absolute *:bottom-0 *:w-full *:transition-opacity *:duration-300;
+  }
+
   .input {
     --h: 0.5rem;
 
